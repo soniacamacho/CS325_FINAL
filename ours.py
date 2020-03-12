@@ -104,16 +104,30 @@ def two_opt(path):
     flag = 1
     while flag:
         flag = 0
+        best_distance = calculateTotalDistance(path)
         for i in range(1, len(path) - 2):
             for j in range(i + 1, len(path)):
                 if j - i == 1:
                     continue  # changes nothing, skip then
-                new_path = path[:]    # Creates a copy of path
-                new_path[i:j] = path[j - 1:i - 1:-1]  # this is the 2-optSwap since j >= i we use -1
+                new_path = []
+                # 1. take path[0] to path[i-1] and add them in order to new_path
+                for index in range(0, i):
+                    new_path.append(path[index])
+
+                # 2. take path[i] to path[k] and add them in reverse order to new_path
+                for index in range(j, i-1, -1):
+                    new_path.append(path[index])
+
+                # 3. take path[k+1] to end and add them in order to new_path
+                for index in range(j+1, len(path)):
+                    new_path.append(path[index])
+                new_distance = calculateTotalDistance(new_path)
+                #new_path = path[:]    # Creates a copy of path
+                #new_path[i:j] = path[j - 1:i - 1:-1]  # this is the 2-optSwap since j >= i we use -1
                 if calculateTotalDistance(new_path) < calculateTotalDistance(path):
                     path = new_path    # change current path to best
+                    best_distance = new_distance
                     flag = 1     
-
     return path
 #******************************************************************************
 #MAIN FUNCTION
@@ -145,7 +159,7 @@ print("DONE WITH VECINOS")
 #re update since vecinos changes it 
 path = read_into_dict_list(filename)
 
-path = two_opt(path)
+path = two_opt(vecinos)
 
 #s = findTSPSolution(s, timeAvailable)
 output_file_rename(filename, path, calculateTotalDistance(path))
