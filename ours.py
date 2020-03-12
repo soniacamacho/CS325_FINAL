@@ -61,14 +61,6 @@ def output_file_rename(filename, tour, distance):
 
 
 
-#******************************************************************************
-# Print tour
-#******************************************************************************
-def printTour(s):
-    # sys.stdout.write("ORDER: ")
-    # for c in s:
-    #     sys.stdout.write(str(c.id) + ' ')
-    print("Distance: " + str(calculateTotalDistance(s)))
 
 #******************************************************************************
 #MAIN FUNCTION
@@ -95,8 +87,7 @@ else:
     #get the file data
     obj = get_file_data(filename)
 
-    print("\nINITIAL SOLUTION")  
-    printTour(obj)
+    
 
     #s = findTSPSolution(s, timeAvailable)
     output_file_rename(filename, obj, calculateTotalDistance(obj))
