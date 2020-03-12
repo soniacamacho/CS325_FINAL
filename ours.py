@@ -11,14 +11,19 @@ class City  :
         self.id = id
         self.x = x
         self.y = y
-        self.visited = False      
-#*****************************************************************************
+        self.visited = False 
+
+    def __str__(self):
+        return f"City {self.id} {self.x} {self.y} {self.visited}"
+
+
+# *****************************************************************************
 # Function to get the distance between two points 
-#******************************************************************************          
+# ******************************************************************************
 def calculateDistance(city1, city2):
-    x_distance = abs(city1.x - city2.x)
-    y_distance = abs(city1.y - city2.y) 
-    return int(round(math.sqrt(x_distance * x_distance + y_distance * y_distance))) 
+    x_distance = abs(city1['x'] - city2['x'])
+    y_distance = abs(city1['y'] - city2['y'])
+    return int(round(math.sqrt(x_distance * x_distance + y_distance * y_distance)))
 #*****************************************************************************
 # Function to get the total distance, this was outlined in the program sepcification
 #******************************************************************************   
@@ -32,20 +37,19 @@ def calculateTotalDistance(path):
 # Function to get the name of the file and access read permissions and collect
 # the data that we need from the program specifications
 #******************************************************************************
-def get_file_data(filename):
-    with open (filename, "r") as inputFile:
-        #loops through each line of file to gather data
-        Cities = []#this will hold the cities once we open the file 
-        # file is opened and Loop through each line in the file
-        for line in inputFile:
-            file_length = []
-            # Split the line read at each white space
-            lineNumbers = line.split()
-            for num in lineNumbers: #parse through each element that is in our input file 
-                file_length.append(int(num))
-            Cities.append(City(file_length[0], file_length[1], file_length[2])) # add on the city that is read in and add this to the array of cities 
+def read_into_dict_list(filename):
+    dict_from_file = []
+    with open(filename) as f:
+        for line in f:
+            dict_entry = {}
+            (id, x, y) = line.split()
+            dict_entry['id'] = int(id)
+            dict_entry['x'] = int(x)
+            dict_entry['y'] = int(y)
+            dict_entry['visited'] = False
+            dict_from_file.append(dict_entry)
+    return dict_from_file
 
-    return Cities
 #******************************************************************************
 # Function to get the name of the file and re name and append the .tours 
 #******************************************************************************
@@ -57,23 +61,21 @@ def output_file_rename(filename, tour, distance):
     output_file.write(str(distance) + '\n')
     #properly print
     for city in tour:
-        output_file.write("{} {} {}\n".format(city.id, city.x, city.y))
+        output_file.write("{} {} {}\n".format(city['id'], city['x'], city['y']))  
         
-        
-# route is unvisited vertices (targets) v is current vertex (source)
+#******************************************************************************
+# Function to get the closest neighbor 
+#******************************************************************************
 def calc_closest_neighbor(source, targets):
     closest = None
     shortest_len = math.inf
-    #print("\nSource: ", source)
     for target in targets:
         if target is not source:
             temp_distance = calculateDistance(source, target)
-            #print("Checking Target: ", target, "Dist from Source: ", temp_distance)
             if temp_distance < shortest_len:
                 closest = target
                 shortest_len = temp_distance
     return closest
-
 #******************************************************************************
 # Function to get the nearest neighbors following the pseudo code 
 # sourced from https://www.slideshare.net/AkshayKamble24/travelling-salesman-problemtsp
@@ -86,20 +88,33 @@ def calc_closest_neighbor(source, targets):
 # return Final_result= Result
 #******************************************************************************
 def calc_neighbors(path):
-    build_path = []
-    current_city = path.pop(0)
-    build_path.append(current_city)
-    while path != []:
-        node = find_shortest_distance(current_city, path)
-        current_city = node
-        path.remove(node)
-        build_path.append(current_city)        
-    return build_path
-
+    build_path = [] #setting the empty path that will build the new path will all the cities 
+    current_city = path.pop(0) #get our current city that were at 
+    build_path.append(current_city) #all this city to our new path were building
+    while path != []: #while the path is not empty 
+        node = calc_closest_neighbor(current_city, path) #get the closest neighbor
+        current_city = node #set the new current city to be the node
+        path.remove(node) #pop that node off our OG path 
+        build_path.append(current_city) #and add it into the new path we built       
+    return build_path #return our new path we built
 #******************************************************************************
-# function to get the actual solution
+# Function to perform the 2-opt stuff
 #******************************************************************************
+def two_opt(path):
+    flag = 1
+    while flag:
+        flag = 0
+        for i in range(1, len(path) - 2):
+            for j in range(i + 1, len(path)):
+                if j - i == 1:
+                    continue  # changes nothing, skip then
+                new_path = path[:]    # Creates a copy of path
+                new_path[i:j] = path[j - 1:i - 1:-1]  # this is the 2-optSwap since j >= i we use -1
+                if calculateTotalDistance(new_path) < calculateTotalDistance(path):
+                    path = new_path    # change current path to best
+                    flag = 1     
 
+    return path
 #******************************************************************************
 #MAIN FUNCTION
 #******************************************************************************
@@ -123,11 +138,14 @@ print("\nINPUT FILE NAME: ", filename)
 start = default_timer()
 
 #get the file data
-path = get_file_data(filename)
+path = read_into_dict_list(filename)
 
 vecinos = calc_neighbors(path)
+print("DONE WITH VECINOS")
+#re update since vecinos changes it 
+path = read_into_dict_list(filename)
 
-#path = sol(path)
+path = two_opt(path)
 
 #s = findTSPSolution(s, timeAvailable)
 output_file_rename(filename, path, calculateTotalDistance(path))
