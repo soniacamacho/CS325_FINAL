@@ -102,7 +102,6 @@ def calc_neighbors(path):
 
 
 def read_into_dict_list(filename):
-    print("reading into dict")
     dict_from_file = []
     with open(filename) as f:
         for line in f:
@@ -116,6 +115,21 @@ def read_into_dict_list(filename):
     return dict_from_file
 
 
+def two_opt(path):
+    flag = 1
+    while flag:
+        flag = 0
+        for i in range(1, len(path) - 2):
+            for j in range(i + 1, len(path)):
+                if j - i == 1:
+                    continue  # changes nothing, skip then
+                new_path = path[:]    # Creates a copy of path
+                new_path[i:j] = path[j - 1:i - 1:-1]  # this is the 2-optSwap since j >= i we use -1
+                if calculateTotalDistance(new_path) < calculateTotalDistance(path):
+                    path = new_path    # change current path to best
+                    flag = 1
+
+    return path
 
 
 # ******************************************************************************
@@ -144,16 +158,21 @@ start = time.time()  # get the starting time to be able to use later
 start = default_timer()
 
 # get the file data
-city_dict = read_into_dict_list("test.txt")
+city_dict = read_into_dict_list("tsp_example_3.txt")
 
-print("Initial Ordering of Cities:")
-for city in city_dict:
-    print(city)
+print("Initial Ordering of Cities...")
+# for city in city_dict:
+#     print(city)
 
-print("\nNN Ordering of Cities:")
+print("\nNN Ordering of Cities...")
 initial_calculation = calc_neighbors(city_dict)
-for vertex in initial_calculation:
-    print(vertex)
+# for vertex in initial_calculation:
+#     print(vertex)
+
+print("\n2OPT Ordering of Cities...")
+two_opt_calc = two_opt(initial_calculation)
+# for vertex in two_opt_calc:
+#     print(vertex)
 
     # s = findTSPSolution(s, timeAvailable)
     # output_file_rename(filename, obj, calculateTotalDistance(obj))
