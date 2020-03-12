@@ -58,6 +58,21 @@ def output_file_rename(filename, tour, distance):
     #properly print
     for city in tour:
         output_file.write("{} {} {}\n".format(city.id, city.x, city.y))
+        
+        
+# route is unvisited vertices (targets) v is current vertex (source)
+def calc_closest_neighbor(source, targets):
+    closest = None
+    shortest_len = math.inf
+    #print("\nSource: ", source)
+    for target in targets:
+        if target is not source:
+            temp_distance = calculateDistance(source, target)
+            #print("Checking Target: ", target, "Dist from Source: ", temp_distance)
+            if temp_distance < shortest_len:
+                closest = target
+                shortest_len = temp_distance
+    return closest
 
 #******************************************************************************
 # Function to get the nearest neighbors following the pseudo code 
