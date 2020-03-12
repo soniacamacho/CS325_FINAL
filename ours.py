@@ -23,8 +23,8 @@ class City:
 # Function to get the distance between two points 
 # ******************************************************************************
 def calculateDistance(city1, city2):
-    x_distance = abs(city1.x - city2.x)
-    y_distance = abs(city1.y - city2.y)
+    x_distance = abs(city1['x'] - city2['x'])
+    y_distance = abs(city1['y'] - city2['y'])
     return int(round(math.sqrt(x_distance * x_distance + y_distance * y_distance)))
 
 
@@ -78,15 +78,42 @@ def output_file_rename(filename, tour, distance):
 def calc_closest_neighbor(source, targets):
     closest = None
     shortest_len = math.inf
-    #print("\nSource: ", source)
+    #print("\tSource: ", source)
     for target in targets:
-        if target is not source:
-            temp_distance = calculateDistance(source, target)
-            #print("Checking Target: ", target, "Dist from Source: ", temp_distance)
-            if temp_distance < shortest_len:
-                closest = target
-                shortest_len = temp_distance
+        #print("\tTarget: ", target)
+        #if target is not source:
+        temp_distance = calculateDistance(source, target)
+        if temp_distance < shortest_len:
+            closest = target
+            shortest_len = temp_distance
     return closest
+
+
+def calc_neighbors(path):
+    build_path = []
+    current_city = path.pop(0)
+    build_path.append(current_city)
+    while path != []:
+        node = calc_closest_neighbor(current_city, path)
+        current_city = node
+        path.remove(node)
+        build_path.append(current_city)
+    return build_path
+
+
+def read_into_dict_list(filename):
+    print("reading into dict")
+    dict_from_file = []
+    with open(filename) as f:
+        for line in f:
+            dict_entry = {}
+            (id, x, y) = line.split()
+            dict_entry['id'] = int(id)
+            dict_entry['x'] = int(x)
+            dict_entry['y'] = int(y)
+            dict_entry['visited'] = False
+            dict_from_file.append(dict_entry)
+    return dict_from_file
 
 
 
@@ -117,9 +144,16 @@ start = time.time()  # get the starting time to be able to use later
 start = default_timer()
 
 # get the file data
-obj = get_file_data("test.txt")  # filename)
-for city in obj:
-    print("City, ", city, ", has closest neighbor of : ", calc_closest_neighbor(city, obj))
+city_dict = read_into_dict_list("test.txt")
+
+print("Initial Ordering of Cities:")
+for city in city_dict:
+    print(city)
+
+print("\nNN Ordering of Cities:")
+initial_calculation = calc_neighbors(city_dict)
+for vertex in initial_calculation:
+    print(vertex)
 
     # s = findTSPSolution(s, timeAvailable)
     # output_file_rename(filename, obj, calculateTotalDistance(obj))
