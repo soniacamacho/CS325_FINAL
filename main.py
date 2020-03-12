@@ -19,6 +19,7 @@ class City:
     def __str__(self):
         return f'{self.id} {self.x} {self.y}'
 
+
 class SubPath:
     cost = -1
     parent = None
@@ -28,8 +29,7 @@ class SubPath:
         self.subset = subset
 
     def __str__(self):
-        return f'Sol: {self.id} {self.subset} {self.cost} {self.parent}'
-
+        return f'[ {self.id} {self.subset} ] = Cost: {self.cost} Parent: {self.parent}'
 
 
 # *****************************************************************************
@@ -70,6 +70,7 @@ def create_dist_matrix(cities):
                        cities]
 
     return distance_matrix
+
 
 def n_size_subsets(full_set, n):
     return [set(i) for i in itertools.combinations(full_set, n)]
@@ -120,39 +121,118 @@ city_list = get_file_data("tsp_example_1.txt")
 # print("Runtime: " + str(end - start) + " seconds.")
 d_matrix = create_dist_matrix(city_list)
 print("---DISTANCE MATRIX---")
-for row in d_matrix:
-    print(row)
+for i, row in enumerate(d_matrix):
+    print(i, row)
 print()
 
 city_name_set = {city.id for city in city_list}
 city_name_set.remove(city_list[0].id)
 
-city_name_subsets = []
-for i in range(1, len(city_name_set)):
-    city_name_subsets.append(n_size_subsets(city_name_set, i))
-print("CITY ID SUBSETS: ", city_name_subsets)
+# city_name_subsets = []
+# for i in range(1, len(city_name_set)):
+#     temp = n_size_subsets(city_name_set, i)
+#     city_name_subsets.append(temp)
+# #print("CITY ID SUBSETS: ", city_name_subsets)
 
 stored_solutions = [[] for k in range(len(city_name_set))]
-print("STORED EFFICIENT SUBPATHS: ", stored_solutions)
+# print("STORED EFFICIENT SUBPATHS: ", stored_solutions)
 
-stored_solutions[0] = [SubPath(city.id, {}) for i, city in enumerate(city_list) if i != 0]
+stored_solutions[0] = [SubPath(city.id, set()) for i, city in enumerate(city_list) if i != 0]
 for i, stored_path in enumerate(stored_solutions[0]):
     stored_path.parent = 0
-    stored_path.cost = calculateDistance(city_list[i + 1], city_list[0])
+    stored_path.cost = d_matrix[0][i + 1]
 
-for stored_path in stored_solutions[0]:
-    print(stored_path)
+# for stored_path in stored_solutions[0]:
+#    print(stored_path)
 
-for i, size_sorted_sub_list in enumerate(city_name_subsets):
-    print("Subsets of Size: ", i+1)
-    for subset in size_sorted_sub_list:
-        print(subset)
+print(len(city_name_set))
+print()
+for i in range(0, len(city_name_set)-1):
+    nset = n_size_subsets(city_name_set, i+1)
+    for subset in nset:
         for vertex in city_name_set - subset:
             a = SubPath(vertex, subset)
-            print("[", vertex, subset,"]")
+            #print("\t[", vertex, subset, "]")
+            costs_to_compare = []
             for j, set_vertex in enumerate(subset):
-                #print(vertex, set_vertex)
-                #if len(subset)
-                print("Distance ", vertex, "to ", set_vertex, ": ", calculateDistance(city_list[set_vertex], city_list[vertex]))
+                temp_dist = d_matrix[set_vertex][vertex]#calculateDistance(city_list[set_vertex], city_list[vertex])
+                #print("\t\tDistance ", vertex, "to ", set_vertex, ": ", temp_dist)
+                subtracted_set = subset - {set_vertex}
+                #print("\t\tSubtractedSet: ", subtracted_set)
+                for retrieved_sol in stored_solutions[i]:
+                    if (retrieved_sol.id == set_vertex) and (subtracted_set == retrieved_sol.subset):
+                        #print("\t\t", retrieved_sol)
+                        costs_to_compare.append((set_vertex, temp_dist + retrieved_sol.cost))
+            #print("\t", costs_to_compare)
+            opt_path = min(costs_to_compare, key=lambda x: x[1])
+            a.parent = opt_path[0]
+            a.cost = opt_path[1]
+            print(a)
+            stored_solutions[i + 1].append(a)
 
 
+# for i, size_sorted_sub_list in enumerate(city_name_subsets):
+#     print(i, size_sorted_sub_list)
+#     #print("Subsets of Size: ", i + 1)
+#     for subset in size_sorted_sub_list:
+#         for vertex in city_name_set - subset:
+#             a = SubPath(vertex, subset)
+#             #print("\t[", vertex, subset, "]")
+#             costs_to_compare = []
+#             for j, set_vertex in enumerate(subset):
+#                 temp_dist = d_matrix[set_vertex][vertex]#calculateDistance(city_list[set_vertex], city_list[vertex])
+#                 #print("\t\tDistance ", vertex, "to ", set_vertex, ": ", temp_dist)
+#                 subtracted_set = subset - {set_vertex}
+#                 #print("\t\tSubtractedSet: ", subtracted_set)
+#                 for retrieved_sol in stored_solutions[i]:
+#                     if (retrieved_sol.id == set_vertex) and (subtracted_set == retrieved_sol.subset):
+#                         #print("\t\t", retrieved_sol)
+#                         costs_to_compare.append((set_vertex, temp_dist + retrieved_sol.cost))
+#             #print("\t", costs_to_compare)
+#             opt_path = min(costs_to_compare, key=lambda x: x[1])
+#             a.parent = opt_path[0]
+#             a.cost = opt_path[1]
+#             #print(a)
+#             stored_solutions[i + 1].append(a)
+
+# print("\nSTORED EFFICIENT SUBPATHS: ")
+# for solution_of_nset in stored_solutions:
+#     for stored_path in solution_of_nset:
+#         print(stored_path)
+
+fp_costs_to_compare = []
+final_sub_path = SubPath(0, city_name_set)
+
+for vertex in city_name_set:
+    dist = d_matrix[vertex][0]
+    subtracted_set = city_name_set - {vertex}
+    subtracted_set_cost = -1
+    for size_3_solution in stored_solutions[2]:
+        if size_3_solution.subset == subtracted_set:
+            subtracted_set_cost = size_3_solution.cost
+    fp_costs_to_compare.append((vertex, dist + subtracted_set_cost))
+    opt_path = min(fp_costs_to_compare, key=lambda x: x[1])
+    final_sub_path.cost = opt_path[1]
+    final_sub_path.parent = opt_path[0]
+
+# print(final_sub_path)
+
+temp_city_set = city_name_set
+stops_in_order = [0]
+tempSubPath = final_sub_path
+counter = len(stored_solutions) - 1
+while len(temp_city_set) > 0:
+    backtracking_v = tempSubPath.parent
+    temp_city_set = tempSubPath.subset - {backtracking_v}
+    for sol in stored_solutions[counter]:
+        if(sol.id == backtracking_v) and (sol.subset == temp_city_set):
+            tempSubPath = sol
+    stops_in_order.append(backtracking_v)
+    counter = counter - 1
+stops_in_order.append(final_sub_path.id)
+
+print()
+print("Results:")
+print("\tTour Length: ", final_sub_path.cost)
+print("\tTour Stops in Order:", stops_in_order)
+#print(len(city_name_subsets))
