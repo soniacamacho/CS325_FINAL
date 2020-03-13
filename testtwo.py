@@ -131,3 +131,15 @@ end = time.time()#default_timer()
 print("Runtime: " + str(end - start) + " seconds.")
 optimal_length = 1573084
 print("Accuracy: ", "(", calculated_total_d, ")/(", optimal_length, ")", (calculated_total_d * 1.0 / optimal_length * 1.0))
+
+# ===============================NOTES TO ADD FASTER TWO OPT===============================================================
+"""
+1. Replace the calculateTotalDistance function with the one I wrote in here (for some reason the old version doesn't work with
+the original path)
+2. Replace the two_opt function with the two_opt_fast function
+3. Add the cost_change function
+4. Set up the timer in the way that it's set up in this program
+5?. Maybe we should add the check to see if the unsorted path is actually faster than the Nearest Neighbor sorted path.
+
+
+"""
